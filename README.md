@@ -152,7 +152,18 @@ docker run -d -p 8080:8080 \
 - `ghcr.io/plasm4e/dipbar:sha-<commit>`: every build
 - `ghcr.io/plasm4e/dipbar:1.2.3`: from a `v1.2.3` tag
 
-GitHub stores the image but doesn't run it. Pull it on any Docker host (a VPS, Fly.io, Render, Railway…) with `docker pull ghcr.io/plasm4e/dipbar:latest`. New packages are private by default; make it public, or log the host in to `ghcr.io`, under the package settings on GitHub.
+GitHub stores the image but doesn't run it. The image is public, so any Docker host can pull it with `docker pull ghcr.io/plasm4e/dipbar:latest`.
+
+### Render (free)
+
+`render.yaml` runs the image on Render's free plan, with HTTPS and an `onrender.com` address. On this plan the app sleeps after about 15 minutes idle (the first visit after that takes 30 seconds or more). The SQLite database isn't persistent: it starts empty after every deploy or restart.
+
+One-time setup:
+
+1. On [render.com](https://render.com), choose **New → Blueprint**, connect this GitHub repo, and apply `render.yaml`.
+2. When prompted, set `APP_KEY` to the output of `php artisan key:generate --show`, and `APP_URL` to the service's address (for example `https://dipbar.onrender.com`).
+3. To redeploy automatically on every push to `main`, copy the service's **Deploy Hook** URL (Settings → Deploy Hook) into a GitHub Actions secret named `RENDER_DEPLOY_HOOK`. Without it, the workflow skips the deploy step, and you redeploy from the Render dashboard.
+
 
 
 - **Hidden means not found.** Notes and collections you can't access return 404 rather than 403, so their existence isn't revealed.
@@ -174,5 +185,6 @@ GitHub stores the image but doesn't run it. Pull it on any Docker host (a VPS, F
 | `resources/js/pages/` | Vue pages: `Map`, `Collections`, `Login`, `Register` |
 | `resources/js/api.js` | `fetch` wrapper for calling the API with the session cookie |
 | `Dockerfile`, `docker/entrypoint.sh` | Production image and its startup script |
-| `.github/workflows/docker.yml` | CI: tests, then build and publish the image |
+| `.github/workflows/docker.yml` | CI: tests, build and publish the image, redeploy on Render |
+| `render.yaml` | Render Blueprint for free hosting |
 | `tests/Feature/` | `NotesApiTest` (API), `FrontendTest` (pages and session auth) |

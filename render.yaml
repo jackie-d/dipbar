@@ -1,0 +1,18 @@
+# Render Blueprint: runs the published image on Render's free plan.
+# The SQLite database is not persistent: it starts empty on every deploy or restart.
+services:
+  - type: web
+    name: dipbar
+    runtime: image
+    image:
+      url: ghcr.io/plasm4e/dipbar:latest
+    plan: free
+    region: oregon
+    healthCheckPath: /up
+    envVars:
+      - key: APP_KEY # output of `php artisan key:generate --show`
+        sync: false
+      - key: APP_URL # e.g. https://dipbar.onrender.com
+        sync: false
+      - key: TRUSTED_PROXIES
+        value: "*"
