@@ -123,7 +123,37 @@ curl -s -H 'Accept: application/json' -H "Authorization: Bearer $TOKEN" \
 curl -s -H 'Accept: application/json' "$API/notes?lat=45.4641&lng=9.1901&radius=100"
 ```
 
-## Notes on the design
+## Docker
+
+The `Dockerfile` builds one production image: PHP 8.4 with Apache, the built frontend, and SQLite stored on a `/data` volume. On start, the container runs migrations, caches config and routes, and serves on port 8080 as the unprivileged `www-data` user.
+
+```bash
+docker build -t dipbar .
+docker run -d -p 8080:8080 \
+  -e APP_KEY="$(php artisan key:generate --show)" \
+  -e APP_URL=https://your-domain.example \
+  -v dipbar-data:/data \
+  dipbar
+```
+
+| Variable | Default | Notes |
+|---|---|---|
+| `APP_KEY` | – | Required. Keep it stable across deploys, or sessions are lost |
+| `APP_URL` | `http://localhost` | Public URL of the app |
+| `PORT` | `8080` | Port Apache listens on |
+| `TRUSTED_PROXIES` | – | Set to `*` behind a load balancer or proxy that terminates HTTPS |
+| `DB_DATABASE` | `/data/database.sqlite` | Keep `/data` on a persistent volume |
+
+### GitHub Actions
+
+`.github/workflows/docker.yml` runs the tests on every push and pull request. On pushes to `main` and `v*` tags, it then builds the image and publishes it to the GitHub Container Registry:
+
+- `ghcr.io/plasm4e/dipbar:latest`: the latest `main`
+- `ghcr.io/plasm4e/dipbar:sha-<commit>`: every build
+- `ghcr.io/plasm4e/dipbar:1.2.3`: from a `v1.2.3` tag
+
+GitHub stores the image but doesn't run it. Pull it on any Docker host (a VPS, Fly.io, Render, Railway…) with `docker pull ghcr.io/plasm4e/dipbar:latest`. New packages are private by default; make it public, or log the host in to `ghcr.io`, under the package settings on GitHub.
+
 
 - **Hidden means not found.** Notes and collections you can't access return 404 rather than 403, so their existence isn't revealed.
 - **Nearby search** narrows candidates with a lat/lng bounding box in SQL, then computes exact haversine distances in PHP. That's fine at small scale; for large datasets, consider PostGIS or a geohash index.
@@ -143,4 +173,6 @@ curl -s -H 'Accept: application/json' "$API/notes?lat=45.4641&lng=9.1901&radius=
 | `database/migrations/2026_10_01_220000_create_notes_tables.php` | `notes`, `note_collections`, `note_collection_user` tables |
 | `resources/js/pages/` | Vue pages: `Map`, `Collections`, `Login`, `Register` |
 | `resources/js/api.js` | `fetch` wrapper for calling the API with the session cookie |
+| `Dockerfile`, `docker/entrypoint.sh` | Production image and its startup script |
+| `.github/workflows/docker.yml` | CI: tests, then build and publish the image |
 | `tests/Feature/` | `NotesApiTest` (API), `FrontendTest` (pages and session auth) |
