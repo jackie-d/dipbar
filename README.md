@@ -2,6 +2,8 @@
 
 A minimal REST API, with a light map frontend, for leaving short notes (lines of poetry, graffiti, short texts) at physical geographic locations.
 
+**Live:** https://dipbar-latest.onrender.com (free hosting: the first visit after a while can take about 30 seconds, and notes are reset on each deploy)
+
 Each note has a position (`lat`/`lng`) and a visibility:
 
 | Visibility | Who can read it |
@@ -156,12 +158,12 @@ GitHub stores the image but doesn't run it. The image is public, so any Docker h
 
 ### Render (free)
 
-`render.yaml` runs the image on Render's free plan, with HTTPS and an `onrender.com` address. On this plan the app sleeps after about 15 minutes idle (the first visit after that takes 30 seconds or more). The SQLite database isn't persistent: it starts empty after every deploy or restart.
+`render.yaml` runs the image on Render's free plan, with HTTPS. It's live at https://dipbar-latest.onrender.com. On this plan the app sleeps after about 15 minutes idle (the first visit after that takes 30 seconds or more). The SQLite database isn't persistent: it starts empty after every deploy or restart.
 
 One-time setup:
 
 1. On [render.com](https://render.com), choose **New → Blueprint**, connect this GitHub repo, and apply `render.yaml`.
-2. When prompted, set `APP_KEY` to the output of `php artisan key:generate --show`, and `APP_URL` to the service's address (for example `https://dipbar.onrender.com`).
+2. When prompted, set `APP_KEY` to the output of `php artisan key:generate --show`, and `APP_URL` to the service's address (here `https://dipbar-latest.onrender.com`).
 3. To redeploy automatically on every push to `main`, copy the service's **Deploy Hook** URL (Settings → Deploy Hook) into a GitHub Actions secret named `RENDER_DEPLOY_HOOK`. Without it, the workflow skips the deploy step, and you redeploy from the Render dashboard.
 
 

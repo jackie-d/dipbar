@@ -12,7 +12,7 @@ services:
     envVars:
       - key: APP_KEY # output of `php artisan key:generate --show`
         sync: false
-      - key: APP_URL # e.g. https://dipbar.onrender.com
+      - key: APP_URL # https://dipbar-latest.onrender.com
         sync: false
       - key: TRUSTED_PROXIES
         value: "*"
