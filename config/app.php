@@ -56,6 +56,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Trusted Proxies
+    |--------------------------------------------------------------------------
+    |
+    | Reverse proxies whose X-Forwarded-* headers are trusted for the client
+    | IP, host and scheme: "*" for any, or a comma-separated list of IPs.
+    | Needed behind a proxy such as GitHub Codespaces port forwarding.
+    |
+    */
+
+    'trusted_proxies' => env('TRUSTED_PROXIES'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

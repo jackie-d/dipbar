@@ -1,6 +1,6 @@
 # dipbar
 
-A minimal REST API for leaving short notes (lines of poetry, graffiti, short texts) at physical geographic locations.
+A minimal REST API, with a light map frontend, for leaving short notes (lines of poetry, graffiti, short texts) at physical geographic locations.
 
 Each note has a position (`lat`/`lng`) and a visibility:
 
@@ -10,25 +10,39 @@ Each note has a position (`lat`/`lng`) and a visibility:
 | `collection` | Members of the note's shared collection |
 | `public` | Everyone, including guests |
 
-Built on Laravel 13 with Sanctum bearer-token auth and SQLite.
+Built on Laravel 13 with Sanctum auth and SQLite. The frontend uses Inertia, Vue 3 and a Leaflet/OpenStreetMap map.
 
 ## Setup
 
-Requires PHP 8.3+ and Composer.
+Requires PHP 8.3+, Composer and Node.js.
 
 ```bash
 composer install
+npm install
 cp .env.example .env
 php artisan key:generate
 php artisan migrate      # offers to create database/database.sqlite if missing
+npm run build            # or `npm run dev` for hot reload while editing the frontend
 php artisan serve        # http://localhost:8000
 ```
 
 Run the tests with `php artisan test`.
 
-## Authentication
+**GitHub Codespaces:** set `APP_URL` to the forwarded address (`https://<codespace>-8000.app.github.dev`) and add `TRUSTED_PROXIES=*` to `.env`. Otherwise asset URLs and redirects point at `127.0.0.1` and the page loads blank.
 
-Register or log in to get a token, then send it on every authenticated request:
+## Frontend
+
+| Page | Path | Notes |
+|---|---|---|
+| Map | `/` | Notes in the visible area as colored pins (public, collection, private). Click the map to leave a note; click a pin to read it or delete your own |
+| Collections | `/collections` | Create collections, add members by email, remove members or leave. Login required |
+| Log in, Sign up | `/login`, `/register` | |
+
+The frontend logs in with a regular cookie session, then calls the same `/api` endpoints. Sanctum accepts that session for same-host requests, so there are no tokens to manage in the browser.
+
+## API authentication
+
+API clients register or log in to get a token, then send it on every authenticated request:
 
 ```
 Authorization: Bearer <token>
@@ -119,11 +133,14 @@ curl -s -H 'Accept: application/json' "$API/notes?lat=45.4641&lng=9.1901&radius=
 
 | Path | Purpose |
 |---|---|
-| `routes/api.php` | All routes |
-| `app/Http/Controllers/` | `AuthController`, `NoteController`, `NoteCollectionController` |
+| `routes/api.php` | API routes |
+| `routes/web.php` | Frontend pages and session login/logout |
+| `app/Http/Controllers/` | `AuthController` (API tokens), `SessionController` (frontend login), `NoteController`, `NoteCollectionController` |
 | `app/Models/Note.php` | `visibleTo` and `near` query scopes, distance calculation |
 | `app/Models/NoteCollection.php` | Collection, its owner and members |
 | `app/Enums/Visibility.php` | `private` / `collection` / `public` |
 | `app/Http/Resources/NoteResource.php` | Note JSON shape |
 | `database/migrations/2026_10_01_220000_create_notes_tables.php` | `notes`, `note_collections`, `note_collection_user` tables |
-| `tests/Feature/NotesApiTest.php` | API feature tests |
+| `resources/js/pages/` | Vue pages: `Map`, `Collections`, `Login`, `Register` |
+| `resources/js/api.js` | `fetch` wrapper for calling the API with the session cookie |
+| `tests/Feature/` | `NotesApiTest` (API), `FrontendTest` (pages and session auth) |
